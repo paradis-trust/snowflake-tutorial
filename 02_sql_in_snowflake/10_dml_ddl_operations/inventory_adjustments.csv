@@ -1,0 +1,4 @@
+adjustment_id,product_id,quantity_change,reason,adjusted_on
+9001,1001,25,initial stock,2026-07-01
+9002,1002,15,initial stock,2026-07-01
+9003,1003,-2,damaged goods,2026-07-02

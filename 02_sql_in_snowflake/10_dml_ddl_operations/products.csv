@@ -1,0 +1,5 @@
+product_id,product_name,category,unit_price,is_active
+1001,Ergonomic Mouse,Accessories,49.99,TRUE
+1002,Wireless Keyboard,Accessories,74.99,TRUE
+1003,USB-C Dock,Accessories,129.00,TRUE
+1004,Monitor Arm,Furniture,89.50,FALSE
