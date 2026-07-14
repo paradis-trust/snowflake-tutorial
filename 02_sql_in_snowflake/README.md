@@ -1,6 +1,6 @@
 # SQL in Snowflake
 
-This chapter uses the writable TPC-H data created by [01_copy_tpch_sample_data.sql](01_copy_tpch_sample_data.sql). Run that script first, then run the examples in [02_basic_analytics_queries.sql](02_basic_analytics_queries.sql).
+This chapter uses the writable TPC-H data created by [01_copy_tpch_sample_data.sql](01_copy_tpch_sample_data.sql). Run that script first, then run the examples in the following script files.
 
 The focus is analytical SQL: reading, shaping, combining, and summarising data to answer business questions. It deliberately does not cover relational design, constraints, or transaction processing.
 
