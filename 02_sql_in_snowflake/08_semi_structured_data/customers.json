@@ -1,0 +1,33 @@
+[
+  {
+    "customer_id": "C-101",
+    "name": "Aiko Tanaka",
+    "tier": "gold",
+    "addresses": [
+      {"type": "home", "city": "Tokyo", "country": "JP"},
+      {"type": "office", "city": "Yokohama", "country": "JP"}
+    ],
+    "preferences": {
+      "language": "ja",
+      "notifications": {
+        "email": true,
+        "sms": false
+      }
+    }
+  },
+  {
+    "customer_id": "C-102",
+    "name": "Samir Patel",
+    "tier": "silver",
+    "addresses": [
+      {"type": "home", "city": "Singapore", "country": "SG"}
+    ],
+    "preferences": {
+      "language": "en",
+      "notifications": {
+        "email": false,
+        "sms": true
+      }
+    }
+  }
+]

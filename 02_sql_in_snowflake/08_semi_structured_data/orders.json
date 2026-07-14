@@ -1,0 +1,92 @@
+[
+  {
+    "order_id": "WEB-1001",
+    "order_date": "2026-06-01",
+    "shipping-method": "express",
+    "discount": 5.00,
+    "customer": {
+      "id": "C-101",
+      "name": "Aiko Tanaka",
+      "contact": {
+        "email": "aiko@example.com",
+        "marketing_opt_in": true
+      }
+    },
+    "shipping_address": {
+      "city": "Tokyo",
+      "country": "JP"
+    },
+    "tags": ["new-customer", "campaign-june"],
+    "items": [
+      {
+        "sku": "SKU-CHAIR-01",
+        "name": "Office Chair",
+        "quantity": 1,
+        "unit_price": 199.99,
+        "attributes": {
+          "color": "black",
+          "warranty_years": 2
+        }
+      },
+      {
+        "sku": "SKU-LAMP-02",
+        "name": "Desk Lamp",
+        "quantity": 2,
+        "unit_price": 39.50,
+        "attributes": {
+          "color": "white"
+        }
+      }
+    ]
+  },
+  {
+    "order_id": "WEB-1002",
+    "order_date": "2026-06-02",
+    "shipping-method": "standard",
+    "discount": null,
+    "customer": {
+      "id": "C-102",
+      "name": "Samir Patel",
+      "contact": {
+        "email": "samir@example.com",
+        "marketing_opt_in": false
+      }
+    },
+    "shipping_address": {
+      "city": "Singapore",
+      "country": "SG"
+    },
+    "tags": ["repeat-customer"],
+    "items": [
+      {
+        "sku": "SKU-DESK-01",
+        "name": "Standing Desk",
+        "quantity": 1,
+        "unit_price": 549.00,
+        "attributes": {
+          "color": "oak",
+          "width_cm": 140
+        }
+      }
+    ]
+  },
+  {
+    "order_id": "WEB-1003",
+    "order_date": "2026-06-03",
+    "shipping-method": "standard",
+    "customer": {
+      "id": "C-103",
+      "name": "Lina Müller",
+      "contact": {
+        "email": "lina@example.com",
+        "marketing_opt_in": true
+      }
+    },
+    "shipping_address": {
+      "city": "Berlin",
+      "country": "DE"
+    },
+    "tags": [],
+    "items": []
+  }
+]

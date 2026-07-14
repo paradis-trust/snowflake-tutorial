@@ -1,0 +1,38 @@
+[
+  {
+    "event_id": "EVT-001",
+    "event_type": "page_view",
+    "event_at": "2026-06-01T09:15:00Z",
+    "user": {"id": "C-101", "name": "Aiko Tanaka"},
+    "context": {
+      "page": {"url": "/products/office-chair", "referrer": "newsletter"},
+      "device": {"type": "mobile", "os": "iOS"}
+    },
+    "properties": {"campaign": "june-launch", "duration_seconds": 12},
+    "labels": ["new", "mobile"]
+  },
+  {
+    "event_id": "EVT-002",
+    "event_type": "add_to_cart",
+    "event_at": "2026-06-01T09:17:00Z",
+    "user": {"id": "C-101", "name": "Aiko Tanaka"},
+    "context": {
+      "page": {"url": "/products/office-chair"},
+      "device": {"type": "mobile", "os": "iOS"}
+    },
+    "properties": {"sku": "SKU-CHAIR-01", "quantity": 1},
+    "labels": ["cart"]
+  },
+  {
+    "event_id": "EVT-003",
+    "event_type": "page_view",
+    "event_at": "2026-06-02T17:40:00Z",
+    "user": {"id": "C-102", "name": "Samir Patel"},
+    "context": {
+      "page": {"url": "/products/standing-desk", "referrer": null},
+      "device": {"type": "desktop", "os": "Linux"}
+    },
+    "properties": {"campaign": "organic-search"},
+    "labels": []
+  }
+]
