@@ -1,0 +1,31 @@
+customer_id,first_name,last_name,email,phone,city,country,signup_date,marketing_opt_in
+1001,Aiko,Tanaka,aiko.tanaka@example.com,+81-90-1000-0001,Tokyo,Japan,2024-01-15,true
+1002,Kenji,Sato,kenji.sato@example.com,+81-90-1000-0002,Osaka,Japan,2024-01-17,false
+1003,Mei,Chen,mei.chen@example.com,+886-912-100-003,Taipei,Taiwan,2024-01-19,true
+1004,Arjun,Patel,arjun.patel@example.com,+91-98765-10004,Bengaluru,India,2024-01-22,true
+1005,Sofia,Rossi,sofia.rossi@example.com,+39-320-100-0005,Milan,Italy,2024-01-25,false
+1006,Liam,O'Connor,liam.oconnor@example.com,+353-85-100-0006,Dublin,Ireland,2024-02-01,true
+1007,Emma,Wilson,emma.wilson@example.com,+44-7700-100007,London,United Kingdom,2024-02-03,true
+1008,Noah,Martin,noah.martin@example.com,+33-6-10-00-00-08,Lyon,France,2024-02-06,false
+1009,Isabella,Garcia,isabella.garcia@example.com,+34-600-100-009,Madrid,Spain,2024-02-08,true
+1010,Lucas,Silva,lucas.silva@example.com,+55-11-91000-0010,Sao Paulo,Brazil,2024-02-12,false
+1011,Olivia,Brown,olivia.brown@example.com,+1-415-555-1011,San Francisco,United States,2024-02-15,true
+1012,Ethan,Johnson,ethan.johnson@example.com,+1-212-555-1012,New York,United States,2024-02-18,true
+1013,Mia,Andersen,mia.andersen@example.com,+45-20-10-10-13,Copenhagen,Denmark,2024-02-21,false
+1014,Oliver,Schmidt,oliver.schmidt@example.com,+49-151-100-1014,Berlin,Germany,2024-02-24,true
+1015,Chloe,Dubois,chloe.dubois@example.com,+33-6-10-00-00-15,Paris,France,2024-02-28,true
+1016,Haruto,Suzuki,haruto.suzuki@example.com,+81-90-1000-0016,Nagoya,Japan,2024-03-02,false
+1017,Grace,Lee,grace.lee@example.com,+82-10-1000-0017,Seoul,South Korea,2024-03-05,true
+1018,Henry,Wong,henry.wong@example.com,+852-5100-0018,Hong Kong,Hong Kong,2024-03-08,false
+1019,Amelia,Smith,amelia.smith@example.com,+61-400-100-019,Sydney,Australia,2024-03-11,true
+1020,Jack,Taylor,jack.taylor@example.com,+64-21-100-0020,Auckland,New Zealand,2024-03-14,false
+1021,Yuki,Nakamura,yuki.nakamura@example.com,+81-90-1000-0021,Sapporo,Japan,2024-03-18,true
+1022,Daniel,Muller,daniel.muller@example.com,+41-79-100-0022,Zurich,Switzerland,2024-03-21,true
+1023,Ava,Clark,ava.clark@example.com,+1-647-555-1023,Toronto,Canada,2024-03-24,false
+1024,Leo,Novak,leo.novak@example.com,+420-601-100-024,Prague,Czechia,2024-03-28,true
+1025,Hana,Kim,hana.kim@example.com,+82-10-1000-0025,Busan,South Korea,2024-04-01,true
+1026,Matteo,Bianchi,matteo.bianchi@example.com,+39-320-100-0026,Rome,Italy,2024-04-04,false
+1027,Zoe,King,zoe.king@example.com,+1-206-555-1027,Seattle,United States,2024-04-07,true
+1028,Felix,Weber,felix.weber@example.com,+49-151-100-1028,Hamburg,Germany,2024-04-10,false
+1029,Nora,Johansson,nora.johansson@example.com,+46-70-100-0029,Stockholm,Sweden,2024-04-14,true
+1030,Ravi,Sharma,ravi.sharma@example.com,+91-98765-10030,Mumbai,India,2024-04-18,true
