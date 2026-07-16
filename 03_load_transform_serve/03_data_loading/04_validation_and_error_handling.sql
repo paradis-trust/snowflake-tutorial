@@ -2,7 +2,7 @@
 -- Validate a bad file, then compare common ON_ERROR behaviours.
 -- This script uses a temporary table so the bronze order table remains clean.
 
-USE DATABASE DATA_LOADING;
+USE DATABASE LOAD_TRANSFORM_SERVE;
 USE SCHEMA BRONZE;
 
 CREATE OR REPLACE TEMPORARY TABLE ORDER_LOAD_ERROR_DEMO

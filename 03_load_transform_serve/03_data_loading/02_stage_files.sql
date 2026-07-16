@@ -9,38 +9,38 @@
 !set variable_substitution=true
 !define repo_root=<repo-root>
 
-USE DATABASE DATA_LOADING;
+USE DATABASE LOAD_TRANSFORM_SERVE;
 USE SCHEMA BRONZE;
 
-PUT file://&{repo_root}/03_data_loading/data/customers.csv
+PUT file://&{repo_root}/03_load_transform_serve/data/customers.csv
   @BRONZE_CSV_STAGE
   AUTO_COMPRESS = FALSE
   OVERWRITE = TRUE;
 
-PUT file://&{repo_root}/03_data_loading/data/orders.csv
+PUT file://&{repo_root}/03_load_transform_serve/data/orders.csv
   @BRONZE_CSV_STAGE
   AUTO_COMPRESS = FALSE
   OVERWRITE = TRUE;
 
 -- Keep the malformed file in the same stage. Later scripts select an explicit
 -- filename, so it cannot be picked up accidentally by a normal load.
-PUT file://&{repo_root}/03_data_loading/data/malformed_orders.csv
+PUT file://&{repo_root}/03_load_transform_serve/data/malformed_orders.csv
   @BRONZE_CSV_STAGE
   AUTO_COMPRESS = FALSE
   OVERWRITE = TRUE;
 
-PUT file://&{repo_root}/03_data_loading/data/events.json
+PUT file://&{repo_root}/03_load_transform_serve/data/events.json
   @BRONZE_JSON_STAGE
   AUTO_COMPRESS = FALSE
   OVERWRITE = TRUE;
 
-PUT file://&{repo_root}/03_data_loading/data/device_readings.jsonl
+PUT file://&{repo_root}/03_load_transform_serve/data/device_readings.jsonl
   @BRONZE_JSON_LINES_STAGE
   AUTO_COMPRESS = FALSE
   OVERWRITE = TRUE;
 
 -- Generate this file first with data/convert_csv_to_parquet.py.
-PUT file://&{repo_root}/03_data_loading/data/product_catalog_source.parquet
+PUT file://&{repo_root}/03_load_transform_serve/data/product_catalog_source.parquet
   @BRONZE_PARQUET_STAGE
   AUTO_COMPRESS = FALSE
   OVERWRITE = TRUE;

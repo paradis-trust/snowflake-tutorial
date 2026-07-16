@@ -13,4 +13,4 @@ The datasets use realistic types and edge cases: multiple currencies and countri
 
 `product_catalog_source.csv` is intentionally the Parquet source rather than a prebuilt binary file. Convert it with the tooling used in your environment, preserving the column names and types, and then upload the resulting `.parquet` file to `@BRONZE_PARQUET_STAGE`.
 
-All targets in this module belong to `DATA_LOADING.BRONZE`. The next module can create `DATA_LOADING.SILVER` for cleaned and conformed data, followed by a small set of business-facing `DATA_LOADING.GOLD` tables or views.
+All loading targets belong to `LOAD_TRANSFORM_SERVE.BRONZE`. The transformations and serving sections will use the same source files to create `LOAD_TRANSFORM_SERVE.SILVER` for cleaned and conformed data, followed by business-facing `LOAD_TRANSFORM_SERVE.GOLD` tables or views.

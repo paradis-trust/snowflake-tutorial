@@ -6,7 +6,7 @@
 -- without a cloud-storage notification integration. In production, configure
 -- an external S3, Azure Blob, or GCS stage and AUTO_INGEST = TRUE.
 
-USE DATABASE DATA_LOADING;
+USE DATABASE LOAD_TRANSFORM_SERVE;
 USE SCHEMA BRONZE;
 
 CREATE OR REPLACE PIPE BRONZE_DEVICE_READINGS_PIPE
@@ -25,7 +25,7 @@ DESCRIBE PIPE BRONZE_DEVICE_READINGS_PIPE;
 -- workshop; production manual Snowpipe normally calls the REST API instead.
 ALTER PIPE BRONZE_DEVICE_READINGS_PIPE REFRESH;
 
-SELECT SYSTEM$PIPE_STATUS('DATA_LOADING.BRONZE.BRONZE_DEVICE_READINGS_PIPE');
+SELECT SYSTEM$PIPE_STATUS('LOAD_TRANSFORM_SERVE.BRONZE.BRONZE_DEVICE_READINGS_PIPE');
 
 -- Snowpipe loads asynchronously. Re-run these queries after pendingFileCount
 -- reaches 0 in SYSTEM$PIPE_STATUS.

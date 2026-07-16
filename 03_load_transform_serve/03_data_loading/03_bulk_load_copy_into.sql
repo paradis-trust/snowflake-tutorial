@@ -2,7 +2,7 @@
 -- Bulk-load the bronze tables with COPY INTO.
 -- Run 01_setup_environment.sql and 02_stage_files.sql first.
 
-USE DATABASE DATA_LOADING;
+USE DATABASE LOAD_TRANSFORM_SERVE;
 USE SCHEMA BRONZE;
 
 -- These are direct CSV loads. Explicit file lists make the load repeatable and

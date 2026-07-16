@@ -5,10 +5,10 @@
 -- and loading experiments do not affect the earlier workshops. It owns only
 -- the bronze layer: an auditable copy of data as it was delivered.
 
-CREATE DATABASE IF NOT EXISTS DATA_LOADING;
-CREATE SCHEMA IF NOT EXISTS DATA_LOADING.BRONZE;
+CREATE DATABASE IF NOT EXISTS LOAD_TRANSFORM_SERVE;
+CREATE SCHEMA IF NOT EXISTS LOAD_TRANSFORM_SERVE.BRONZE;
 
-USE DATABASE DATA_LOADING;
+USE DATABASE LOAD_TRANSFORM_SERVE;
 USE SCHEMA BRONZE;
 
 -- File formats describe how Snowflake should interpret staged files.
