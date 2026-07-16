@@ -4,8 +4,12 @@ This shared area uses one dataset and one Snowflake database throughout the
 data lifecycle: ingestion into bronze, transformation into silver, and serving
 through gold tables or views.
 
-The current material is in `03_data_loading/`. The source files are in `data/`
-so later transformation and serving sections can reuse them without copying
+The current material is organized by lifecycle step:
+
+- `03_data_loading/` ingests source files into bronze.
+- `04_transformation_and_serving/` transforms bronze data and serves gold results.
+
+The source files are in `data/` so every section can reuse them without copying
 files.
 
 Database structure:
