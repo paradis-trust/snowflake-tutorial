@@ -1,0 +1,132 @@
+-- Chapter 6: Management
+-- Generate a human ad-hoc workload, inspect immediate query history, then use
+-- ACCOUNT_USAGE for account-wide monitoring and troubleshooting.
+
+USE ROLE DATA_ANALYST;
+USE WAREHOUSE MGMT_XS_WH;
+
+-- No QUERY_TAG is required for human ad-hoc work. Snowflake records the user,
+-- active role, and warehouse automatically; file 01 applies governed tags to
+-- the user and warehouse once. Applications such as Airflow or dbt should set
+-- QUERY_TAG automatically only when they have dynamic run metadata to add.
+
+-- A small, recognizable ad-hoc workload for Query History and Query Profile.
+SELECT
+  SHIPPING_COUNTRY,
+  CURRENCY,
+  COUNT(*) AS ORDER_COUNT,
+  SUM(NET_ORDER_TOTAL) AS NET_REVENUE
+FROM LOAD_TRANSFORM_SERVE.SILVER.SILVER_ORDERS
+GROUP BY SHIPPING_COUNTRY, CURRENCY
+ORDER BY NET_REVENUE DESC;
+
+SELECT
+  C.COUNTRY,
+  COUNT(DISTINCT O.CUSTOMER_ID) AS BUYING_CUSTOMERS,
+  SUM(O.NET_ORDER_TOTAL) AS NET_REVENUE
+FROM LOAD_TRANSFORM_SERVE.SILVER.SILVER_CUSTOMERS C
+JOIN LOAD_TRANSFORM_SERVE.SILVER.SILVER_ORDERS O
+  ON O.CUSTOMER_ID = C.CUSTOMER_ID
+GROUP BY C.COUNTRY
+ORDER BY NET_REVENUE DESC;
+
+-- Information Schema table functions are near-real-time and ideal for active
+-- incident investigation. Their retention and scope are narrower than
+-- ACCOUNT_USAGE. QUERY_TAG is normally NULL for this human workload unless a
+-- client or user-level default supplied one.
+USE ROLE MANAGEMENT_ADMIN;
+
+SELECT
+  QUERY_ID,
+  USER_NAME,
+  ROLE_NAME,
+  QUERY_TAG,
+  WAREHOUSE_NAME,
+  EXECUTION_STATUS,
+  TOTAL_ELAPSED_TIME,
+  COMPILATION_TIME,
+  EXECUTION_TIME,
+  QUEUED_PROVISIONING_TIME,
+  QUEUED_REPAIR_TIME,
+  QUEUED_OVERLOAD_TIME,
+  TRANSACTION_BLOCKED_TIME,
+  BYTES_SCANNED,
+  ROWS_PRODUCED,
+  QUERY_TEXT
+FROM TABLE(
+  MANAGEMENT_LAB.INFORMATION_SCHEMA.QUERY_HISTORY_BY_SESSION(
+    RESULT_LIMIT => 100
+  )
+)
+WHERE USER_NAME = CURRENT_USER()
+  AND ROLE_NAME = 'DATA_ANALYST'
+  AND WAREHOUSE_NAME = 'MGMT_XS_WH'
+ORDER BY START_TIME DESC;
+
+-- ACCOUNT_USAGE supports durable, account-wide analysis but has ingestion
+-- latency. The workload above may not appear immediately.
+SELECT
+  QUERY_ID,
+  START_TIME,
+  USER_NAME,
+  ROLE_NAME,
+  WAREHOUSE_NAME,
+  QUERY_TAG,
+  QUERY_TYPE,
+  EXECUTION_STATUS,
+  TOTAL_ELAPSED_TIME,
+  QUEUED_OVERLOAD_TIME,
+  BYTES_SPILLED_TO_LOCAL_STORAGE,
+  BYTES_SPILLED_TO_REMOTE_STORAGE,
+  PARTITIONS_SCANNED,
+  PARTITIONS_TOTAL,
+  ERROR_CODE,
+  ERROR_MESSAGE
+FROM SNOWFLAKE.ACCOUNT_USAGE.QUERY_HISTORY
+WHERE START_TIME >= DATEADD('DAY', -7, CURRENT_TIMESTAMP())
+  AND WAREHOUSE_NAME LIKE 'MGMT%WH'
+ORDER BY START_TIME DESC;
+
+-- Queuing indicates that concurrency exceeds available warehouse capacity.
+-- Repeated queuing may justify query tuning, workload isolation, resizing, or
+-- multi-cluster configuration rather than immediately choosing a larger size.
+SELECT
+  TO_DATE(START_TIME) AS USAGE_DATE,
+  WAREHOUSE_NAME,
+  ROUND(SUM(AVG_RUNNING), 2) AS RUNNING_LOAD,
+  ROUND(SUM(AVG_QUEUED_LOAD), 2) AS QUEUED_LOAD,
+  ROUND(SUM(AVG_QUEUED_PROVISIONING), 2) AS PROVISIONING_LOAD
+FROM SNOWFLAKE.ACCOUNT_USAGE.WAREHOUSE_LOAD_HISTORY
+WHERE START_TIME >= DATEADD('DAY', -7, CURRENT_TIMESTAMP())
+  AND WAREHOUSE_NAME LIKE 'MGMT%WH'
+GROUP BY USAGE_DATE, WAREHOUSE_NAME
+ORDER BY USAGE_DATE DESC, WAREHOUSE_NAME;
+
+-- Common triage view: slow, queued, spilling, or failed queries.
+SELECT
+  QUERY_ID,
+  START_TIME,
+  USER_NAME,
+  ROLE_NAME,
+  WAREHOUSE_NAME,
+  TOTAL_ELAPSED_TIME,
+  QUEUED_OVERLOAD_TIME,
+  BYTES_SPILLED_TO_LOCAL_STORAGE,
+  BYTES_SPILLED_TO_REMOTE_STORAGE,
+  EXECUTION_STATUS,
+  ERROR_MESSAGE,
+  QUERY_TEXT
+FROM SNOWFLAKE.ACCOUNT_USAGE.QUERY_HISTORY
+WHERE START_TIME >= DATEADD('DAY', -7, CURRENT_TIMESTAMP())
+  AND (
+    QUEUED_OVERLOAD_TIME > 0
+    OR BYTES_SPILLED_TO_LOCAL_STORAGE > 0
+    OR BYTES_SPILLED_TO_REMOTE_STORAGE > 0
+    OR EXECUTION_STATUS = 'FAIL'
+  )
+ORDER BY START_TIME DESC
+LIMIT 100;
+
+-- Suspend explicitly when the exercise is over instead of waiting for the
+-- auto-suspend interval. This also demonstrates OPERATE on a warehouse.
+ALTER WAREHOUSE MGMT_XS_WH SUSPEND;

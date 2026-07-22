@@ -1,0 +1,172 @@
+-- Chapter 6: Management
+-- Create a management role, an isolated lab database, and warehouses with
+-- different sizes and operating policies.
+
+USE ROLE SECURITYADMIN;
+
+CREATE ROLE IF NOT EXISTS MANAGEMENT_ADMIN
+  COMMENT = 'Administers workshop monitoring, cost controls, and environments';
+
+-- Custom roles roll up to SYSADMIN. The direct user grant exists only so one
+-- learner can switch roles throughout the workshop.
+GRANT ROLE MANAGEMENT_ADMIN TO ROLE SYSADMIN;
+
+SET workshop_user = CURRENT_USER();
+GRANT ROLE MANAGEMENT_ADMIN TO USER IDENTIFIER($workshop_user);
+
+-- ACCOUNT_USAGE and custom budgets use roles and privileges from SNOWFLAKE.
+-- These grants expose operational metadata, so assign them narrowly in
+-- production.
+USE ROLE ACCOUNTADMIN;
+
+GRANT MONITOR USAGE ON ACCOUNT TO ROLE MANAGEMENT_ADMIN;
+GRANT DATABASE ROLE SNOWFLAKE.USAGE_VIEWER TO ROLE MANAGEMENT_ADMIN;
+GRANT DATABASE ROLE SNOWFLAKE.GOVERNANCE_VIEWER TO ROLE MANAGEMENT_ADMIN;
+GRANT DATABASE ROLE SNOWFLAKE.OBJECT_VIEWER TO ROLE MANAGEMENT_ADMIN;
+GRANT DATABASE ROLE SNOWFLAKE.SECURITY_VIEWER TO ROLE MANAGEMENT_ADMIN;
+GRANT DATABASE ROLE SNOWFLAKE.BUDGET_CREATOR TO ROLE MANAGEMENT_ADMIN;
+
+-- SYSADMIN provisions account compute and database containers. The management
+-- role receives delegated operation privileges afterwards.
+USE ROLE SYSADMIN;
+
+CREATE DATABASE IF NOT EXISTS MANAGEMENT_LAB
+  COMMENT = 'Isolated objects for the management workshop';
+
+CREATE SCHEMA IF NOT EXISTS MANAGEMENT_LAB.GOVERNANCE
+  COMMENT = 'Custom budgets and cost-management objects';
+
+CREATE SCHEMA IF NOT EXISTS MANAGEMENT_LAB.RECOVERY
+  COMMENT = 'Time Travel and recovery exercises';
+
+-- The central governance role owns the management taxonomy but receives no
+-- privileges on recovery tables or application data.
+GRANT USAGE ON DATABASE MANAGEMENT_LAB TO ROLE GOVERNANCE_ADMIN;
+GRANT USAGE, CREATE TAG ON SCHEMA MANAGEMENT_LAB.GOVERNANCE
+  TO ROLE GOVERNANCE_ADMIN;
+
+CREATE WAREHOUSE IF NOT EXISTS MGMT_XS_WH
+  WAREHOUSE_SIZE = 'XSMALL'
+  AUTO_SUSPEND = 60
+  AUTO_RESUME = TRUE
+  INITIALLY_SUSPENDED = TRUE
+  STATEMENT_TIMEOUT_IN_SECONDS = 300
+  STATEMENT_QUEUED_TIMEOUT_IN_SECONDS = 60
+  COMMENT = 'Interactive management workshop warehouse';
+
+CREATE WAREHOUSE IF NOT EXISTS MGMT_SMALL_WH
+  WAREHOUSE_SIZE = 'SMALL'
+  AUTO_SUSPEND = 60
+  AUTO_RESUME = TRUE
+  INITIALLY_SUSPENDED = TRUE
+  STATEMENT_TIMEOUT_IN_SECONDS = 600
+  STATEMENT_QUEUED_TIMEOUT_IN_SECONDS = 120
+  COMMENT = 'Small batch workload example';
+
+CREATE WAREHOUSE IF NOT EXISTS MGMT_MEDIUM_WH
+  WAREHOUSE_SIZE = 'MEDIUM'
+  AUTO_SUSPEND = 60
+  AUTO_RESUME = TRUE
+  INITIALLY_SUSPENDED = TRUE
+  STATEMENT_TIMEOUT_IN_SECONDS = 900
+  STATEMENT_QUEUED_TIMEOUT_IN_SECONDS = 180
+  COMMENT = 'Medium workload example; leave suspended unless testing it';
+
+GRANT USAGE ON DATABASE MANAGEMENT_LAB TO ROLE MANAGEMENT_ADMIN;
+GRANT USAGE ON SCHEMA MANAGEMENT_LAB.GOVERNANCE TO ROLE MANAGEMENT_ADMIN;
+GRANT USAGE ON SCHEMA MANAGEMENT_LAB.RECOVERY TO ROLE MANAGEMENT_ADMIN;
+GRANT CREATE TABLE ON SCHEMA MANAGEMENT_LAB.RECOVERY TO ROLE MANAGEMENT_ADMIN;
+GRANT CREATE SNOWFLAKE.CORE.BUDGET
+  ON SCHEMA MANAGEMENT_LAB.GOVERNANCE
+  TO ROLE MANAGEMENT_ADMIN;
+
+GRANT USAGE, MONITOR, OPERATE, MODIFY
+  ON WAREHOUSE MGMT_XS_WH TO ROLE MANAGEMENT_ADMIN;
+GRANT USAGE, MONITOR, OPERATE, MODIFY
+  ON WAREHOUSE MGMT_SMALL_WH TO ROLE MANAGEMENT_ADMIN;
+GRANT USAGE, MONITOR, OPERATE, MODIFY
+  ON WAREHOUSE MGMT_MEDIUM_WH TO ROLE MANAGEMENT_ADMIN;
+
+-- DATA_ANALYST runs the sample business queries; MANAGEMENT_ADMIN observes
+-- them without receiving SELECT on application data.
+GRANT USAGE ON WAREHOUSE MGMT_XS_WH TO ROLE DATA_ANALYST;
+
+-- ---------------------------------------------------------------------------
+-- Governed workload attribution
+-- ---------------------------------------------------------------------------
+-- Human ad-hoc queries already record USER_NAME, ROLE_NAME, and WAREHOUSE_NAME.
+-- Classify those durable objects once instead of asking every user to build a
+-- QUERY_TAG manually. GOVERNANCE_ADMIN has centralized APPLY TAG on the account
+-- from Chapter 5, which permits classification without object ownership.
+USE ROLE GOVERNANCE_ADMIN;
+USE DATABASE MANAGEMENT_LAB;
+USE SCHEMA GOVERNANCE;
+
+CREATE TAG COST_CENTER
+  ALLOWED_VALUES 'DATA_PLATFORM', 'ENGINEERING', 'FINANCE', 'HR', 'SALES'
+  COMMENT = 'Attributes Snowflake users and resources to governed cost centers';
+
+CREATE TAG WORKLOAD_TYPE
+  ALLOWED_VALUES 'ADHOC', 'ELT', 'BI', 'DATA_SCIENCE'
+  COMMENT = 'Classifies the intended workload of a Snowflake resource';
+
+CREATE TAG ENVIRONMENT
+  ALLOWED_VALUES 'DEV', 'TEST', 'PROD', 'TRAINING'
+  COMMENT = 'Classifies the deployment environment of a Snowflake resource';
+
+-- In production, identity provisioning normally applies user tags from the
+-- corporate identity source. This direct assignment represents that SCIM flow
+-- for the single workshop learner.
+ALTER USER IDENTIFIER($workshop_user)
+  SET TAG MANAGEMENT_LAB.GOVERNANCE.COST_CENTER = 'DATA_PLATFORM';
+
+ALTER DATABASE MANAGEMENT_LAB SET TAG
+  MANAGEMENT_LAB.GOVERNANCE.COST_CENTER = 'DATA_PLATFORM',
+  MANAGEMENT_LAB.GOVERNANCE.ENVIRONMENT = 'TRAINING';
+
+ALTER WAREHOUSE MGMT_XS_WH SET TAG
+  MANAGEMENT_LAB.GOVERNANCE.COST_CENTER = 'DATA_PLATFORM',
+  MANAGEMENT_LAB.GOVERNANCE.WORKLOAD_TYPE = 'ADHOC',
+  MANAGEMENT_LAB.GOVERNANCE.ENVIRONMENT = 'TRAINING';
+
+ALTER WAREHOUSE MGMT_SMALL_WH SET TAG
+  MANAGEMENT_LAB.GOVERNANCE.COST_CENTER = 'DATA_PLATFORM',
+  MANAGEMENT_LAB.GOVERNANCE.WORKLOAD_TYPE = 'ELT',
+  MANAGEMENT_LAB.GOVERNANCE.ENVIRONMENT = 'TRAINING';
+
+ALTER WAREHOUSE MGMT_MEDIUM_WH SET TAG
+  MANAGEMENT_LAB.GOVERNANCE.COST_CENTER = 'DATA_PLATFORM',
+  MANAGEMENT_LAB.GOVERNANCE.WORKLOAD_TYPE = 'BI',
+  MANAGEMENT_LAB.GOVERNANCE.ENVIRONMENT = 'TRAINING';
+
+SELECT
+  CURRENT_USER() AS WORKSHOP_USER,
+  SYSTEM$GET_TAG(
+    'MANAGEMENT_LAB.GOVERNANCE.COST_CENTER',
+    CURRENT_USER(),
+    'USER'
+  ) AS USER_COST_CENTER,
+  SYSTEM$GET_TAG(
+    'MANAGEMENT_LAB.GOVERNANCE.WORKLOAD_TYPE',
+    'MGMT_XS_WH',
+    'WAREHOUSE'
+  ) AS ADHOC_WAREHOUSE_TYPE;
+
+USE ROLE MANAGEMENT_ADMIN;
+
+SHOW WAREHOUSES LIKE 'MGMT%WH';
+
+-- Inspect the settings returned by SHOW. All three warehouses should still be
+-- suspended; creating a warehouse does not need to consume credits.
+SELECT
+  "name" AS WAREHOUSE_NAME,
+  "size" AS WAREHOUSE_SIZE,
+  "state" AS STATE,
+  "auto_suspend" AS AUTO_SUSPEND_SECONDS,
+  "auto_resume" AS AUTO_RESUME
+FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()))
+ORDER BY WAREHOUSE_NAME;
+
+-- ALTER WAREHOUSE is the normal automated change path. Keep the statement
+-- commented until you want to experiment with a different policy.
+-- ALTER WAREHOUSE MGMT_XS_WH SET AUTO_SUSPEND = 120 AUTO_RESUME = TRUE;
