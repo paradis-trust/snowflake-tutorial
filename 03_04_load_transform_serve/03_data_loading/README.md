@@ -8,7 +8,7 @@ and business metrics belong to the following transformations module.
 Run the files in order:
 
 1. `01_setup_environment.sql` creates the bronze schema, file formats, named internal stages, and target tables.
-2. Run `03_load_transform_serve/data/convert_csv_to_parquet.py` from its `data` directory to generate `product_catalog_source.parquet`. The generated Parquet file is already included when available.
+2. Run `03_04_load_transform_serve/data/convert_csv_to_parquet.py` from its `data` directory to generate `product_catalog_source.parquet`. The generated Parquet file is already included when available.
 3. `02_stage_files.sql` uploads the workshop files. Its `PUT` commands require SnowSQL, the Snowflake CLI, or another supported client; they do not run in a Snowsight worksheet.
 4. `03_bulk_load_copy_into.sql` loads CSV, Parquet, and JSON files with `COPY INTO`. `device_readings.jsonl` is intentionally held back for Snowpipe.
 5. `04_validation_and_error_handling.sql` checks the malformed CSV, writes rejected records to the rejected-files stage, and compares `CONTINUE` with `SKIP_FILE`. Its `ABORT_STATEMENT` example is commented out because it intentionally stops execution.

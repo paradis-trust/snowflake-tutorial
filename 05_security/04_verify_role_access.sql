@@ -1,0 +1,143 @@
+-- Chapter 5: Security
+-- Verify least-privilege RBAC, row filtering, salary masking, tag-based email
+-- masking, and separation between data, governance, and system administration.
+-- Run the previous scripts first.
+
+-- This single learner has every workshop role. Production users would not.
+-- Disable secondary roles so every check represents one deliberate persona.
+USE SECONDARY ROLES NONE;
+
+-- DATA_ANALYST has approved workforce-analysis access. It sees all departments,
+-- but salary is NULL and tagged email is masked.
+USE ROLE DATA_ANALYST;
+USE SECONDARY ROLES NONE;
+USE WAREHOUSE COMPUTE_WH;
+
+SELECT CURRENT_ROLE() AS ACTIVE_ROLE;
+SELECT COUNT(*) AS SILVER_ORDER_COUNT
+FROM LOAD_TRANSFORM_SERVE.SILVER.SILVER_ORDERS;
+
+SELECT EMPLOYEE_ID, DEPARTMENT, EMAIL, SALARY
+FROM LOAD_TRANSFORM_SERVE.SENSITIVE.EMPLOYEE_COMPENSATION
+ORDER BY EMPLOYEE_ID;
+
+-- Expected to fail: DATA_ANALYST has no Bronze access.
+SELECT * FROM LOAD_TRANSFORM_SERVE.BRONZE.BRONZE_ORDERS;
+
+-- FINANCE receives only the sensitive table, sees Finance rows only, and sees
+-- salary because it is required for its job. Email remains masked.
+USE ROLE FINANCE;
+USE SECONDARY ROLES NONE;
+USE WAREHOUSE COMPUTE_WH;
+
+SELECT CURRENT_ROLE() AS ACTIVE_ROLE;
+SELECT EMPLOYEE_ID, DEPARTMENT, EMAIL, SALARY
+FROM LOAD_TRANSFORM_SERVE.SENSITIVE.EMPLOYEE_COMPENSATION
+ORDER BY EMPLOYEE_ID;
+
+-- Expected to fail: FINANCE was not granted general Gold serving access.
+SELECT * FROM LOAD_TRANSFORM_SERVE.GOLD.SECURE_DAILY_SALES;
+
+-- HR sees all departments, exact salaries, and unmasked email addresses.
+USE ROLE HR;
+USE SECONDARY ROLES NONE;
+USE WAREHOUSE COMPUTE_WH;
+
+SELECT CURRENT_ROLE() AS ACTIVE_ROLE;
+SELECT EMPLOYEE_ID, DEPARTMENT, EMAIL, SALARY
+FROM LOAD_TRANSFORM_SERVE.SENSITIVE.EMPLOYEE_COMPENSATION
+ORDER BY EMPLOYEE_ID;
+
+-- DATA_ENGINEER operates the pipeline but has no access to the separate
+-- sensitive schema. Pipeline administration is not sensitive-data access.
+USE ROLE DATA_ENGINEER;
+USE SECONDARY ROLES NONE;
+USE WAREHOUSE COMPUTE_WH;
+
+SELECT CURRENT_ROLE() AS ACTIVE_ROLE;
+SELECT COUNT(*) AS BRONZE_ORDER_COUNT
+FROM LOAD_TRANSFORM_SERVE.BRONZE.BRONZE_ORDERS;
+
+-- Expected to fail.
+SELECT * FROM LOAD_TRANSFORM_SERVE.SENSITIVE.EMPLOYEE_COMPENSATION;
+
+-- The object owner can maintain the table, but the row policy returns no rows
+-- because ownership is not an authorization condition in the policy.
+USE ROLE LOAD_TRANSFORM_SERVE_OWNER;
+USE SECONDARY ROLES NONE;
+USE WAREHOUSE COMPUTE_WH;
+
+SELECT CURRENT_ROLE() AS ACTIVE_ROLE;
+SELECT COUNT(*) AS ROWS_VISIBLE_TO_OBJECT_OWNER
+FROM LOAD_TRANSFORM_SERVE.SENSITIVE.EMPLOYEE_COMPENSATION;
+
+-- The object owner can inspect which governance objects protect its table.
+SELECT TAG_NAME, TAG_VALUE, COLUMN_NAME, APPLY_METHOD
+FROM TABLE(
+  LOAD_TRANSFORM_SERVE.INFORMATION_SCHEMA.TAG_REFERENCES(
+    'LOAD_TRANSFORM_SERVE.SENSITIVE.EMPLOYEE_COMPENSATION.EMAIL',
+    'COLUMN'
+  )
+);
+
+-- But only GOVERNANCE_ADMIN can check the underlying policies.
+USE ROLE GOVERNANCE_ADMIN;
+USE SECONDARY ROLES NONE;
+USE WAREHOUSE COMPUTE_WH;
+
+SELECT CURRENT_ROLE() AS ACTIVE_ROLE;
+
+SELECT
+  POLICY_NAME,
+  POLICY_KIND,
+  REF_COLUMN_NAME,
+  TAG_NAME,
+  POLICY_STATUS
+FROM TABLE(
+  LOAD_TRANSFORM_SERVE.INFORMATION_SCHEMA.POLICY_REFERENCES(
+    REF_ENTITY_NAME => 'LOAD_TRANSFORM_SERVE.SENSITIVE.EMPLOYEE_COMPENSATION',
+    REF_ENTITY_DOMAIN => 'TABLE'
+  )
+)
+ORDER BY POLICY_KIND, REF_COLUMN_NAME;
+
+-- GOVERNANCE_ADMIN owns policy definitions and can inspect their metadata, but
+-- it was deliberately granted no SELECT privilege on the protected table.
+SHOW MASKING POLICIES IN SCHEMA LOAD_TRANSFORM_SERVE.SECURITY;
+SHOW ROW ACCESS POLICIES IN SCHEMA LOAD_TRANSFORM_SERVE.SECURITY;
+SHOW TAGS IN SCHEMA LOAD_TRANSFORM_SERVE.SECURITY;
+
+-- Expected to fail: policy ownership and schema usage do not grant data access.
+-- SELECT * FROM LOAD_TRANSFORM_SERVE.SENSITIVE.EMPLOYEE_COMPENSATION;
+
+-- SYSADMIN inherits every custom role and therefore has the underlying object
+-- privileges. However, CURRENT_ROLE() is SYSADMIN, not HR or FINANCE, so the
+-- row policy returns no compensation rows.
+USE ROLE SYSADMIN;
+USE SECONDARY ROLES NONE;
+USE WAREHOUSE COMPUTE_WH;
+
+SELECT CURRENT_ROLE() AS ACTIVE_ROLE;
+SELECT COUNT(*) AS ROWS_VISIBLE_TO_SYSADMIN
+FROM LOAD_TRANSFORM_SERVE.SENSITIVE.EMPLOYEE_COMPENSATION;
+
+-- ACCOUNTADMIN inherits SYSADMIN and can administer the hierarchy, but it is
+-- also absent from every policy condition and therefore sees no rows by default.
+USE ROLE ACCOUNTADMIN;
+USE SECONDARY ROLES NONE;
+USE WAREHOUSE COMPUTE_WH;
+
+SELECT CURRENT_ROLE() AS ACTIVE_ROLE;
+SELECT COUNT(*) AS ROWS_VISIBLE_TO_ACCOUNTADMIN
+FROM LOAD_TRANSFORM_SERVE.SENSITIVE.EMPLOYEE_COMPENSATION;
+
+-- SECURITYADMIN audits grants without inheriting the privileges being audited.
+USE ROLE SECURITYADMIN;
+USE SECONDARY ROLES NONE;
+
+SHOW GRANTS TO ROLE DATA_ENGINEER;
+SHOW GRANTS TO ROLE DATA_ANALYST;
+SHOW GRANTS TO ROLE FINANCE;
+SHOW GRANTS TO ROLE HR;
+SHOW GRANTS TO ROLE LOAD_TRANSFORM_SERVE_OWNER;
+SHOW GRANTS TO ROLE GOVERNANCE_ADMIN;
