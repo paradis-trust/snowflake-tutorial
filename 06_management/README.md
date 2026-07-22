@@ -13,7 +13,6 @@ Run the SQL files in order:
 4. `04_cost_controls_resource_monitor_and_budget.sql` creates an enforcing resource monitor, guides you through creating a tag-scoped custom budget in Snowsight, and inspects that budget with SQL.
 5. `05_time_travel_and_recovery.sql` recovers accidental DML with historical cloning, then drops and undrops an isolated table.
 6. `06_clone_dev_environment.sql` creates a writable zero-copy DEV database and reviews cloned automation and access behavior.
-7. `07_optional_cleanup.sql` contains commented cleanup statements.
 
 ## Operational model
 
