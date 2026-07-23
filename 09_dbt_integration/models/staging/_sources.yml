@@ -1,0 +1,35 @@
+version: 2
+
+sources:
+  - name: load_transform_serve
+    description: Source-aligned Bronze tables loaded during Chapter 3.
+    database: LOAD_TRANSFORM_SERVE
+    schema: BRONZE
+    tables:
+      - name: bronze_customers
+        description: Raw customer records, including repeated deliveries.
+        columns:
+          - name: customer_id
+            description: Source customer identifier.
+            data_tests:
+              - not_null
+          - name: loaded_at
+            description: Timestamp at which Snowflake loaded the source row.
+            data_tests:
+              - not_null
+
+      - name: bronze_orders
+        description: Append-only order deliveries, including later order versions.
+        columns:
+          - name: order_id
+            description: Source order identifier.
+            data_tests:
+              - not_null
+          - name: customer_id
+            description: Customer that placed the order.
+            data_tests:
+              - not_null
+          - name: loaded_at
+            description: Timestamp at which Snowflake loaded the source row.
+            data_tests:
+              - not_null

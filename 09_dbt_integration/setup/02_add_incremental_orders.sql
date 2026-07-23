@@ -1,0 +1,39 @@
+-- Run this only after the first successful dbt build. Bronze is append-only:
+-- one row is a new order and one is a later version of an existing order.
+
+USE ROLE DATA_ENGINEER;
+USE DATABASE LOAD_TRANSFORM_SERVE;
+USE SCHEMA BRONZE;
+
+INSERT INTO BRONZE_ORDERS (
+  ORDER_ID,
+  CUSTOMER_ID,
+  ORDER_DATE,
+  STATUS,
+  SALES_CHANNEL,
+  CURRENCY,
+  ORDER_TOTAL,
+  DISCOUNT_AMOUNT,
+  SHIPPING_CITY,
+  SHIPPING_COUNTRY
+)
+VALUES
+  (
+    59999, 1002, CURRENT_DATE(), 'PENDING', 'WEB', 'JPY',
+    8900.00, 400.00, 'Osaka', 'Japan'
+  ),
+  (
+    50015, 1015, DATE '2024-04-10', 'DELIVERED', 'WEB', 'EUR',
+    58.50, 0.00, 'Paris', 'France'
+  );
+
+SELECT
+  ORDER_ID,
+  CUSTOMER_ID,
+  STATUS,
+  ORDER_TOTAL,
+  DISCOUNT_AMOUNT,
+  LOADED_AT
+FROM BRONZE_ORDERS
+WHERE ORDER_ID IN (50015, 59999)
+ORDER BY ORDER_ID, LOADED_AT;

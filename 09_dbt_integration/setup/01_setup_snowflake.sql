@@ -1,0 +1,76 @@
+-- Chapter 9: dbt integration
+-- Create a dedicated execution role, output database, and warehouse. dbt reads
+-- Bronze through SELECT grants and owns only its isolated output database.
+
+USE ROLE SECURITYADMIN;
+
+CREATE ROLE DBT_DEVELOPER
+  COMMENT = 'Develops and executes the Snowflake onboarding dbt project';
+
+GRANT ROLE DBT_DEVELOPER TO ROLE SYSADMIN;
+
+SET workshop_user = CURRENT_USER();
+GRANT ROLE DBT_DEVELOPER TO USER IDENTIFIER($workshop_user);
+
+USE ROLE SYSADMIN;
+
+CREATE DATABASE DBT_ONBOARDING
+  COMMENT = 'Isolated development outputs and project objects for Chapter 9';
+
+GRANT OWNERSHIP ON DATABASE DBT_ONBOARDING
+  TO ROLE DBT_DEVELOPER COPY CURRENT GRANTS;
+
+CREATE WAREHOUSE DBT_WH
+  WAREHOUSE_SIZE = 'XSMALL'
+  AUTO_SUSPEND = 60
+  AUTO_RESUME = TRUE
+  INITIALLY_SUSPENDED = TRUE
+  STATEMENT_TIMEOUT_IN_SECONDS = 600
+  STATEMENT_QUEUED_TIMEOUT_IN_SECONDS = 60
+  COMMENT = 'Executes the Chapter 9 dbt project';
+
+GRANT USAGE, MONITOR ON WAREHOUSE DBT_WH TO ROLE DBT_DEVELOPER;
+
+USE ROLE DBT_DEVELOPER;
+USE DATABASE DBT_ONBOARDING;
+
+-- DEV is the target schema from profiles.yml. dbt combines it with the custom
+-- schema names in dbt_project.yml to create DEV_STAGING, DEV_INTERMEDIATE,
+-- and DEV_MARTS while keeping every development object isolated.
+CREATE SCHEMA DEV
+  COMMENT = 'Base development target used by dbt schema generation';
+
+CREATE SCHEMA PROJECTS
+  COMMENT = 'Versioned Snowflake DBT PROJECT objects';
+
+-- Governance receives container visibility only so it can classify the new
+-- database. This does not grant access to any schema or modeled data.
+GRANT USAGE ON DATABASE DBT_ONBOARDING TO ROLE GOVERNANCE_ADMIN;
+
+-- The source owner grants the dbt role read-only access. SECURITYADMIN does not
+-- grant data access, and DBT_DEVELOPER receives no Bronze DML privileges.
+USE ROLE LOAD_TRANSFORM_SERVE_OWNER;
+
+GRANT USAGE ON DATABASE LOAD_TRANSFORM_SERVE TO ROLE DBT_DEVELOPER;
+GRANT USAGE ON SCHEMA LOAD_TRANSFORM_SERVE.BRONZE TO ROLE DBT_DEVELOPER;
+GRANT SELECT ON ALL TABLES IN SCHEMA LOAD_TRANSFORM_SERVE.BRONZE
+  TO ROLE DBT_DEVELOPER;
+GRANT SELECT ON FUTURE TABLES IN SCHEMA LOAD_TRANSFORM_SERVE.BRONZE
+  TO ROLE DBT_DEVELOPER;
+
+-- Reuse the governed management taxonomy from Chapter 6.
+USE ROLE GOVERNANCE_ADMIN;
+
+ALTER DATABASE DBT_ONBOARDING SET TAG
+  MANAGEMENT_LAB.GOVERNANCE.COST_CENTER = 'DATA_PLATFORM',
+  MANAGEMENT_LAB.GOVERNANCE.ENVIRONMENT = 'TRAINING';
+
+ALTER WAREHOUSE DBT_WH SET TAG
+  MANAGEMENT_LAB.GOVERNANCE.COST_CENTER = 'DATA_PLATFORM',
+  MANAGEMENT_LAB.GOVERNANCE.WORKLOAD_TYPE = 'ELT',
+  MANAGEMENT_LAB.GOVERNANCE.ENVIRONMENT = 'TRAINING';
+
+USE ROLE DBT_DEVELOPER;
+
+SHOW SCHEMAS IN DATABASE DBT_ONBOARDING;
+SHOW GRANTS TO ROLE DBT_DEVELOPER;

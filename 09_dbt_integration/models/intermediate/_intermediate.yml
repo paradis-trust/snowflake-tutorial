@@ -1,0 +1,40 @@
+version: 2
+
+models:
+  - name: int_customers_deduplicated
+    description: >
+      One normalized customer record per customer, retaining the most recently
+      loaded Bronze version.
+    columns:
+      - name: customer_id
+        description: Stable customer identifier and model grain.
+        data_tests:
+          - not_null
+          - unique
+      - name: bronze_loaded_at
+        description: Load timestamp of the retained Bronze record.
+        data_tests:
+          - not_null
+
+  - name: int_orders_deduplicated
+    description: >
+      One normalized order record per order, retaining the most recently loaded
+      Bronze version and deriving reusable order measures and status flags.
+    columns:
+      - name: order_id
+        description: Stable order identifier and model grain.
+        data_tests:
+          - not_null
+          - unique
+      - name: customer_id
+        description: Customer that placed the order.
+        data_tests:
+          - not_null
+      - name: net_order_total
+        description: Gross order total less the normalized discount amount.
+        data_tests:
+          - not_null
+      - name: bronze_loaded_at
+        description: Load timestamp of the retained Bronze record.
+        data_tests:
+          - not_null

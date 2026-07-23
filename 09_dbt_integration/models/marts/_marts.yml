@@ -1,0 +1,81 @@
+version: 2
+
+models:
+  - name: dim_customers
+    description: Published customer dimension sourced from deduplicated customer data.
+    columns:
+      - name: customer_id
+        description: Customer dimension key.
+        data_tests:
+          - not_null
+          - unique
+      - name: email
+        description: Normalized customer email.
+        data_tests:
+          - not_null
+
+  - name: fct_orders
+    description: >
+      Incremental order fact. Snowflake MERGE updates later versions of existing
+      orders and inserts newly delivered orders.
+    columns:
+      - name: order_id
+        description: Order fact key.
+        data_tests:
+          - not_null
+          - unique
+      - name: customer_id
+        description: Customer dimension key.
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_customers')
+              field: customer_id
+      - name: currency
+        description: Currency of all monetary values on the order.
+        data_tests:
+          - not_null
+      - name: bronze_loaded_at
+        description: Load timestamp of the source version materialized by dbt.
+        data_tests:
+          - not_null
+
+  - name: customer_order_summary
+    description: >
+      Customer order metrics at customer and currency grain. Currency remains in
+      the grain because this project does not perform foreign-exchange conversion.
+    columns:
+      - name: customer_id
+        description: Customer identifier.
+        data_tests:
+          - not_null
+      - name: currency
+        description: Currency of the monetary metrics; null for customers without orders.
+      - name: order_count
+        description: Number of orders in this customer and currency group.
+        data_tests:
+          - not_null
+      - name: net_order_total
+        description: Completed-order net value in the indicated currency.
+        data_tests:
+          - not_null
+
+  - name: daily_sales
+    description: Completed sales by order date, shipping country, and currency.
+    columns:
+      - name: order_date
+        description: Business date of the completed orders.
+        data_tests:
+          - not_null
+      - name: shipping_country
+        description: Destination country.
+        data_tests:
+          - not_null
+      - name: currency
+        description: Currency of the aggregated monetary values.
+        data_tests:
+          - not_null
+      - name: order_count
+        description: Number of completed orders in the group.
+        data_tests:
+          - not_null

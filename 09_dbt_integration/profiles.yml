@@ -1,0 +1,10 @@
+onboarding_analytics:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      role: DBT_DEVELOPER
+      database: DBT_ONBOARDING
+      schema: DEV
+      warehouse: DBT_WH
+      threads: 4

@@ -1,0 +1,53 @@
+version: 2
+
+models:
+  - name: stg_customers
+    description: >
+      Source-conformed customer records with basic naming, casing, and null
+      normalization. Repeated deliveries remain visible at this layer.
+    columns:
+      - name: customer_id
+        description: Source customer identifier; not unique across deliveries.
+        data_tests:
+          - not_null
+      - name: email
+        description: Lower-cased customer email.
+        data_tests:
+          - not_null
+      - name: bronze_loaded_at
+        description: Load timestamp of the Bronze record.
+        data_tests:
+          - not_null
+
+  - name: stg_orders
+    description: >
+      Source-conformed order deliveries with basic text normalization. Later
+      versions of an order remain visible at this layer.
+    columns:
+      - name: order_id
+        description: Source order identifier; not unique across deliveries.
+        data_tests:
+          - not_null
+      - name: customer_id
+        description: Customer that placed the order.
+        data_tests:
+          - not_null
+      - name: status
+        description: Normalized order status.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values:
+                  - CANCELLED
+                  - DELIVERED
+                  - PENDING
+                  - RETURNED
+                  - SHIPPED
+      - name: order_total
+        description: Gross order total in the source currency.
+        data_tests:
+          - not_null
+      - name: bronze_loaded_at
+        description: Load timestamp of the Bronze record.
+        data_tests:
+          - not_null
